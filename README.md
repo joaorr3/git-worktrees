@@ -1,4 +1,4 @@
-# git-worktrees
+# git-worktrees-explorer
 
 This extension provides a GUI for managing git worktrees. You can add, delete and switch between them.
 
