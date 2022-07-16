@@ -32,10 +32,6 @@ export const Git = {
     addNewBranch,
     workTree: { path, branchName, origin },
   }: CreateWorkTreeModel): Promise<ResponseStatusModel> {
-    // if (!origin) {
-    //   return { status: "error", message: "No origin" };
-    // }
-
     if (addNewBranch && origin) {
       try {
         const res = await this.provider.raw(["worktree", "add", "-b", branchName, path, origin]);
@@ -54,16 +50,15 @@ export const Git = {
   },
   async deleteWorkTree({ path }: DeleteWorkTreeModel) {
     try {
-      const res = await this.provider.raw(["worktree", "remove", path]);
-      const res2 = await this.provider.raw(["worktree", "prune"]);
+      await this.provider.raw(["worktree", "remove", path]);
+      await this.provider.raw(["worktree", "prune"]);
       return { status: "success", message: `Worktree Deleted` };
     } catch (error) {
       return { status: "error", message: error };
     }
   },
   async getLocalBranches() {
-    // const branches = await this.provider.branchLocal();
-    const branches = await this.provider.branch();
+    const branches = await this.provider.branchLocal();
     return branches;
   },
 };

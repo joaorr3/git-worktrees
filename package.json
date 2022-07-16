@@ -15,10 +15,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:git-worktrees.cmd.refresh",
-    "onView:git-worktrees.view.explorer",
-    "onView:git-worktrees.view.add",
-    "onView:explorer"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
