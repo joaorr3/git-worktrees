@@ -7,17 +7,18 @@ import { createGitWorkTreeTreeView } from "./tree";
 export function activate(context: ExtensionContext) {
   console.log("Activated");
   const { refresh } = createGitWorkTreeTreeView("explorer");
-  createGitWorkTreeTreeView("add");
 
   const gitExtension = extensions.getExtension<GitExtension>("vscode.git")?.exports;
-  const git = gitExtension?.getAPI(1);
+  if (gitExtension) {
+    const git = gitExtension?.getAPI(1);
 
-  try {
-    git?.repositories[0].state.onDidChange(() => {
-      refresh();
-    });
-  } catch (error) {
-    console.log("error: ", error);
+    try {
+      git?.repositories[0].state.onDidChange(() => {
+        refresh();
+      });
+    } catch (error) {
+      console.log("error: ", error);
+    }
   }
 
   commands.registerCommand("git-worktrees.cmd.open", (item: WorkTreeInfoModel) => {

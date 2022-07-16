@@ -94,13 +94,6 @@
           "contextualTitle": "WorkTrees Explorer",
           "visibility": "visible",
           "icon": "media/wt2.svg"
-        },
-        {
-          "id": "git-worktrees.view.add",
-          "name": "Add WorkTree",
-          "contextualTitle": "Add",
-          "visibility": "collapsed",
-          "icon": "media/wt2.svg"
         }
       ]
     }

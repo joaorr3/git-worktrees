@@ -1,7 +1,15 @@
 import { commands, OpenDialogOptions, QuickPickItem, QuickPickItemKind, Uri, window, workspace } from "vscode";
 import { Refresh, WorkTreeInfoModel } from "./models";
-import { Git, rootPath } from "./utils";
+import { Git, rootPath, folderName } from "./utils";
 import * as path from "path";
+
+const openDialogOptions: OpenDialogOptions = {
+  canSelectMany: false,
+  openLabel: "Select",
+  canSelectFiles: false,
+  canSelectFolders: true,
+  title: "Select new worktree path",
+};
 
 export const Commands = {
   open(item: WorkTreeInfoModel) {
@@ -15,15 +23,6 @@ export const Commands = {
   },
   async add(callbacks: Refresh) {
     window.showInformationMessage("Add WorkTree");
-
-    const options: OpenDialogOptions = {
-      canSelectMany: false,
-      openLabel: "Select",
-      canSelectFiles: false,
-      canSelectFolders: true,
-      title: "Select new worktree path",
-      // defaultUri: Uri.file(path.join(path.dirname(rootPath ?? ""), '')),
-    };
 
     const items: QuickPickItem[] = [
       {
@@ -40,9 +39,6 @@ export const Commands = {
         alwaysShow: true,
       },
     ];
-
-    // const quickPick = window.createQuickPick();
-    // quickPick.
 
     try {
       const creationMethodDialogResponse = await window.showQuickPick(items, {
@@ -69,35 +65,26 @@ export const Commands = {
           throw new Error("WorkTree creation aborted");
         }
 
-        const defaultUri = Uri.file(path.join(path.dirname(rootPath ?? ""), newBranchName));
-
-        await workspace.fs.createDirectory(defaultUri);
-
-        const uri = await window.showOpenDialog({
-          ...options,
-          defaultUri,
-        });
-
-        const chosenPath = uri?.[0].path;
-
-        const res = await Git.createWorkTree({
-          workTree: {
-            branchName: newBranchName,
-            path: chosenPath || defaultUri.path,
-            origin: branches.current,
-          },
+        const { res, path } = await createWorkTree({
+          branchName: newBranchName,
+          currentBranch: branches.current,
           addNewBranch: true,
         });
 
         if (res.status === "success") {
           window.showInformationMessage(`Git says: ${res.message}`);
           callbacks.refresh();
+          this.open({
+            branchName: newBranchName,
+            path,
+          });
         } else {
           window.showErrorMessage(`Ups: ${res.message}`);
-          await workspace.fs.delete(defaultUri);
         }
       } else {
-        const pickedBranch = await window.showQuickPick(branches.all, {
+        const allBranches = branches.all.filter((b) => b !== branches.current);
+
+        const pickedBranch = await window.showQuickPick(allBranches, {
           title: "Pick a local branch",
         });
 
@@ -106,32 +93,21 @@ export const Commands = {
           throw new Error("WorkTree creation aborted");
         }
 
-        const defaultUri = Uri.file(path.join(path.dirname(rootPath ?? ""), pickedBranch));
-
-        await workspace.fs.createDirectory(defaultUri);
-
-        const uri = await window.showOpenDialog({
-          ...options,
-          defaultUri,
-        });
-
-        const chosenPath = uri?.[0].path;
-
-        const res = await Git.createWorkTree({
-          workTree: {
-            branchName: pickedBranch,
-            path: chosenPath || defaultUri.path,
-            origin: branches.current,
-          },
+        const { res, path } = await createWorkTree({
+          branchName: pickedBranch,
+          currentBranch: branches.current,
           addNewBranch: false,
         });
 
         if (res.status === "success") {
           window.showInformationMessage(`Git says: ${res.message}`);
           callbacks.refresh();
+          this.open({
+            branchName: pickedBranch,
+            path,
+          });
         } else {
           window.showErrorMessage(`Ups: ${res.message}`);
-          await workspace.fs.delete(defaultUri);
         }
       }
     } catch (error) {
@@ -160,4 +136,48 @@ export const Commands = {
       }
     }
   },
+};
+
+const createWorkTree = async ({
+  branchName,
+  addNewBranch,
+  currentBranch,
+}: {
+  branchName: string;
+  addNewBranch: boolean;
+  currentBranch: string;
+}) => {
+  const basePath = path.join(path.dirname(rootPath ?? ""), `${folderName}.worktrees`);
+  const defaultPath = path.join(basePath, branchName);
+  const defaultUri = Uri.file(defaultPath);
+
+  await workspace.fs.createDirectory(defaultUri);
+
+  const uri = await window.showOpenDialog({
+    ...openDialogOptions,
+    defaultUri,
+  });
+
+  const chosenPath = uri?.[0].path;
+
+  const workTreePath = chosenPath || defaultUri.path;
+
+  const res = await Git.createWorkTree({
+    workTree: {
+      branchName: branchName,
+      path: workTreePath,
+      origin: currentBranch,
+    },
+    addNewBranch,
+  });
+
+  if (res.status === "error" || chosenPath !== defaultUri.path) {
+    const basePathUri = Uri.file(basePath);
+    await workspace.fs.delete(basePathUri, { recursive: true });
+  }
+
+  return {
+    res,
+    path: workTreePath,
+  };
 };
