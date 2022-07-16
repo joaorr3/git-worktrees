@@ -1,6 +1,7 @@
 {
   "name": "git-worktrees",
   "displayName": "Git Worktrees",
+  "publisher": "JooRibeiro",
   "description": "Switch between git worktrees easily",
   "version": "0.0.1",
   "repository": {
