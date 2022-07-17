@@ -176,8 +176,7 @@ const createWorkTree = async ({
   });
 
   if (res.status === "error" || chosenPath !== defaultUri.path) {
-    const basePathUri = Uri.file(basePath);
-    await workspace.fs.delete(basePathUri, { recursive: true });
+    await workspace.fs.delete(defaultUri, { recursive: true });
   }
 
   return {
