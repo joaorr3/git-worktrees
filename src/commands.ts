@@ -168,7 +168,7 @@ const createWorkTree = async ({
 
   const res = await Git.createWorkTree({
     workTree: {
-      branchName: branch,
+      branchName,
       path: workTreePath,
       origin: currentBranch,
     },
