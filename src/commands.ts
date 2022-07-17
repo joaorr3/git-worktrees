@@ -147,8 +147,12 @@ const createWorkTree = async ({
   addNewBranch: boolean;
   currentBranch: string;
 }) => {
+  const regex = /\//g;
+
+  const branch = branchName.replace(regex, "_");
+
   const basePath = path.join(path.dirname(rootPath ?? ""), `${folderName}.worktrees`);
-  const defaultPath = path.join(basePath, branchName);
+  const defaultPath = path.join(basePath, branch);
   const defaultUri = Uri.file(defaultPath);
 
   await workspace.fs.createDirectory(defaultUri);
@@ -164,7 +168,7 @@ const createWorkTree = async ({
 
   const res = await Git.createWorkTree({
     workTree: {
-      branchName: branchName,
+      branchName: branch,
       path: workTreePath,
       origin: currentBranch,
     },
